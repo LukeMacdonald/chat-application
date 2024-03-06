@@ -19,9 +19,18 @@ msgInput.addEventListener("keypress", () => {
 });
 
 socket.on("message", (data) => {
+  activity.textContent = "";
   const li = document.createElement("li");
   li.textContent = data;
   document.querySelector("ul").appendChild(li);
 });
 
-socket.on("");
+let activityTimer;
+socket.on("activity", (name) => {
+  activity.textContent = `${name} is typing...`;
+  // clear after 3 seconds
+  clearTimeout(activityTimer);
+  activityTimer = setTimeout(() => {
+    activity.textContent = "";
+  }, 3000);
+});
