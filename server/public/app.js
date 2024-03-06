@@ -1,21 +1,44 @@
 const socket = io("ws://localhost:3500");
 
-const msgInput = document.querySelector("input");
+// Class Selectors
+const activity = document.querySelector(".activity");
+const userList = document.querySelector(".user-list");
+const roomList = document.querySelector(".room-list");
+const chatDisplay = document.querySelector(".chat-display");
+
+// ID Selectors
+const msgInput = document.querySelector("#message");
+const nameInput = document.querySelector("#name");
+const chatRoom = document.querySelector("#room");
+
+function enterRoom(e) {
+  e.preventDefault();
+  if (nameInput.value && chatRoom.value) {
+    socket.emit("enterRoom", {
+      name: nameInput.value,
+      room: chatRoom.value,
+    });
+  }
+}
+
 function sendMessage(e) {
   e.preventDefault();
-  if (msgInput.value) {
-    socket.emit("message", msgInput.value);
+  if (nameInput.value && chatRoom.value && msgInput.value) {
+    socket.emit("message", {
+      text: msgInput.value,
+      name: nameInput.value,
+    });
     msgInput.value = "";
   }
   msgInput.focus();
 }
 
-const activity = document.querySelector(".activity");
-document.querySelector("form").addEventListener("submit", sendMessage);
+document.querySelector(".form-msg").addEventListener("submit", sendMessage);
+document.querySelector(".form-join").addEventListener("submit", enterRoom);
 
 // Listen for messages
 msgInput.addEventListener("keypress", () => {
-  socket.emit("activity", socket.id.substring(0, 5));
+  socket.emit("activity", nameInput.value);
 });
 
 socket.on("message", (data) => {
