@@ -1,8 +1,9 @@
 const { Server } = require("socket.io");
 const express = require("express");
-const cors = require("cors");
 const path = require("path");
+
 const PORT = process.env.port || 3500;
+const ADMIN = "Admin";
 
 const app = express();
 
@@ -11,6 +12,14 @@ app.use(express.static(path.join(__dirname, "public")));
 const expressServer = app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
+
+// state for users
+const userState = {
+  users: [],
+  setUsers: function (newUsersArray) {
+    this.users = newUsersArray;
+  },
+};
 
 const io = new Server(expressServer, {
   cors: {
@@ -49,3 +58,14 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("activity", name);
   });
 });
+function buildMsg(name, text) {
+  return {
+    name,
+    text,
+    time: new Intl.DateTimeFormat("default", {
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+    }).format(new Date()),
+  };
+}
