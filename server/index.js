@@ -14,7 +14,7 @@ const expressServer = app.listen(PORT, () => {
 });
 
 // state for users
-const userState = {
+const UsersState = {
   users: [],
   setUsers: function (newUsersArray) {
     this.users = newUsersArray;
@@ -34,14 +34,24 @@ io.on("connection", (socket) => {
   console.log(`User ${socket.id} Connected`);
 
   // Upon connection -- only to user
-  socket.emit("message", "Welcome to Chat App!");
+  socket.emit("message", buildMsg(ADMIN, "Welcome to Chat App!"));
 
+  socket.on("enterRoom", ({ name, room }) => {
+    // leave previous room
+    const prevRoom = getUser(socket.id)?.room;
+    if (prevRoom) {
+      socket.leave(prevRoom);
+      io.to(prevRoom).emit(
+        "message",
+        buildMsg(ADMIN, `${name} has left the room`),
+      );
+    }
+  });
   // Upon connection -- to all others
   socket.broadcast.emit("message", `User ${socket.id} Has Joined Chat!`);
 
   // Listening for an event;
   socket.on("message", (data) => {
-    console.log(data);
     io.emit("message", `${socket.id.substring(0, 5)}: ${data}`);
   });
 
@@ -68,4 +78,30 @@ function buildMsg(name, text) {
       second: "numeric",
     }).format(new Date()),
   };
+}
+
+// User State functions
+
+function activateUser(id, name, room) {
+  const user = { id, name, room };
+  UsersState.setUsers([
+    ...UsersState.users.filter((user) => user.id !== id),
+    user,
+  ]);
+  return user;
+}
+
+function userLeavesApp(id) {
+  UsersState.setUsers(UsersState.users.filter((user) => user.id !== id));
+}
+function getUser(id) {
+  return UsersState.users.find((user) => user.id === id);
+}
+
+function getUsersInRoom(room) {
+  return UsersState.users.filter((user) => user.room === room);
+}
+
+function getAllActiveRooms() {
+  return Array.from(new Set(UsersState.users.map((user) => user.room)));
 }
