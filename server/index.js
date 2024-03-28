@@ -36,6 +36,8 @@ io.on("connection", (socket) => {
   // Upon connection -- only to user
   socket.emit("message", buildMsg(ADMIN, "Welcome to Chat App!"));
 
+  socket.emit("roomList", { rooms: getAllActiveRooms() });
+
   socket.on("enterRoom", ({ name, room }) => {
     // leave previous room
     const prevRoom = getUser(socket.id)?.room;
@@ -72,7 +74,7 @@ io.on("connection", (socket) => {
     io.to(user.room).emit("userList", { users: getUsersInRoom(user.room) });
 
     // Update room lists for everyone
-    io.emit("roomsList", { rooms: getAllActiveRooms() });
+    io.emit("roomList", { rooms: getAllActiveRooms() });
   });
 
   // When user disconnects -- to all others
@@ -87,13 +89,11 @@ io.on("connection", (socket) => {
       io.to(user.room).emit("userList", {
         users: getUsersInRoom(user.room),
       });
-      io.emit("roomsList", { rooms: getAllActiveRooms() });
+      io.emit("roomList", { rooms: getAllActiveRooms() });
     }
     console.log(`User ${socket.id} has disconnected`);
   });
 
-  // Upon connection -- to all others
-  socket.broadcast.emit("message", `User ${socket.id} Has Joined Chat!`);
   // Listening for an event;
   socket.on("message", ({ name, text }) => {
     const room = getUser(socket.id)?.room;
